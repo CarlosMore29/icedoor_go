@@ -1,0 +1,6 @@
+.env
+.env.prod
+.vscode
+var/
+
+server
