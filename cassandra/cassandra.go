@@ -1,6 +1,7 @@
 package cassandra
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strconv"
@@ -28,15 +29,21 @@ func GetSession(cosmosCassandraContactPoint, cosmosCassandraPort, cosmosCassandr
 	clusterConfig := gocql.NewCluster(cosmosCassandraContactPoint)
 	portInt, errorGlobal = strconv.Atoi(cosmosCassandraPort)
 
+	var sslOptions = new(gocql.SslOptions)
+
 	if errorGlobal == nil {
 		clusterConfig.Port = portInt
 		clusterConfig.ProtoVersion = 4
 		clusterConfig.Authenticator = gocql.PasswordAuthenticator{Username: cosmosCassandraUser, Password: cosmosCassandraPassword}
-		// clusterConfig.SslOpts = &gocql.SslOptions{Config: &tls.Config{MinVersion: tls.VersionTLS12}}
+		clusterConfig.SslOpts = &gocql.SslOptions{Config: &tls.Config{MinVersion: tls.VersionTLS12}}
 
 		clusterConfig.ConnectTimeout = 10 * time.Second
 		clusterConfig.Timeout = 10 * time.Second
 		clusterConfig.DisableInitialHostLookup = true
+
+		clusterConfig.SslOpts.EnableHostVerification = false
+		clusterConfig.SslOpts = sslOptions
+		// clusterConfig.Consistency = gocql.LocalOne
 
 		// uncomment if you want to track time taken for individual queries
 		//clusterConfig.QueryObserver = timer{}
@@ -73,7 +80,7 @@ func InsertTestCassandra(keyspace, table string, session *gocql.Session, timelin
 	var created bool = true
 	var errorGlobal error = nil
 
-	errorGlobal = session.Query(fmt.Sprintf(cassandraTestInsert, keyspace, table)).Bind(timeline.ID, timeline.Data, timeline.Date).Exec()
+	errorGlobal = session.Query(fmt.Sprintf(cassandraTestInsert, keyspace, table)).Bind(timeline.ID, "charly", timeline.Date).Exec()
 	if errorGlobal != nil {
 		created = false
 		fmt.Println(errorGlobal)

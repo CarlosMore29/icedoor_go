@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/CarlosMore29/icedoor_go/cassandra"
@@ -55,6 +56,8 @@ func main() {
 	}
 	fmt.Printf("Listening on host: %s, port: %s\n", host, port)
 
+	var pt int = 0
+
 	for {
 		// Listen for an incoming connection
 		conn, err := l.Accept()
@@ -69,7 +72,7 @@ func main() {
 				fmt.Printf("Error reading: %#v\n", err)
 				return
 			}
-			fmt.Printf("Message received: %s\n", string(buf[:len]))
+			// fmt.Printf("Message received: %s\n", string(buf[:len]))
 
 			// time.Sleep(8 * time.Second)
 
@@ -81,15 +84,18 @@ func main() {
 				Date: time.Now(),
 			}
 
+			// logger.Info(testObj)
 			_, error_insert := cassandra.InsertTestCassandra(cosmosCassandraKeySpace, "timeline", session, testObj)
 
 			if error_insert != nil {
-				fmt.Println(error_insert)
+				fmt.Println("error_insert: ", error_insert)
 			} else {
 				// fmt.Println(created)
 			}
 
-			conn.Write([]byte("Ok"))
+			pt += 1
+			fmt.Println("entradas: ", pt)
+			conn.Write([]byte(strconv.Itoa(pt)))
 			conn.Close()
 		}(conn)
 	}
@@ -102,5 +108,4 @@ func envGLobals() {
 	cosmosCassandraUser = os.Getenv("CASSANDRA_USER")
 	cosmosCassandraPassword = os.Getenv("CASSANDRA_PASSWORD")
 	cosmosCassandraKeySpace = os.Getenv("CASSANDRA_KEYSPACE")
-
 }
